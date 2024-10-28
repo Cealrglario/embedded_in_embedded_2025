@@ -92,6 +92,21 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  // This will turn on the left most LED to blue
+  LedOn(BLUE0);
+  LedPWM(BLUE0, LED_PWM_50);
+  LedPWM(RED0, LED_PWM_50);
+
+  // This will turn on the right most LED to right (assuming it was already off)
+  LedToggle(RED3);
+  LedPWM(RED3, LED_PWM_5);
+
+  // This will blink the second from the right LED green twice every second
+  LedPWM(GREEN2, LED_PWM_5);
+
+  // This will set the second from the left LED to blue at its dimmest level before being off completely
+  LedPWM(BLUE1, LED_PWM_5);
+
   /* If good initialization, set state to Idle */
   if( 1 )
   {
