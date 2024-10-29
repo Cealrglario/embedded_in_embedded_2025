@@ -38,6 +38,7 @@ PROTECTED FUNCTIONS
 **********************************************************************************************************************/
 
 #include "configuration.h"
+#include <stdio.h>
 
 /***********************************************************************************************************************
 Global variable definitions with scope across entire project.
@@ -92,20 +93,23 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
-  // This will turn on the left most LED to blue
-  LedOn(BLUE0);
-  LedPWM(BLUE0, LED_PWM_50);
-  LedPWM(RED0, LED_PWM_50);
+  LedOff(RED0);
+  LedOff(GREEN0);
+  LedOff(BLUE0);
 
-  // This will turn on the right most LED to right (assuming it was already off)
-  LedToggle(RED3);
-  LedPWM(RED3, LED_PWM_5);
+  LedOff(RED1);
+  LedOff(GREEN1);
+  LedOff(BLUE1);
 
-  // This will blink the second from the right LED green twice every second
-  LedPWM(GREEN2, LED_PWM_5);
+  LedOff(RED2);
+  LedOff(GREEN2);
+  LedOff(BLUE2);
 
-  // This will set the second from the left LED to blue at its dimmest level before being off completely
-  LedPWM(BLUE1, LED_PWM_5);
+  LedOff(RED3);
+  LedOff(GREEN3);
+  LedOff(BLUE3);
+
+  LedOff(LCD_BL);
 
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -155,6 +159,51 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
+  static u16 u16BlinkCount = 0;
+  static u8 u8Counter = 0;
+
+  u16BlinkCount++;
+
+  if(u16BlinkCount == u16BlinkTime) {
+    u16BlinkCount = 0;
+    u8Counter++;
+
+    if(u8Counter == 16) {
+      u8Counter = 0;
+    }
+
+    // LSB (Bit 0) will be red
+    LedOff(RED3);
+
+    // Bit 1 will be blue
+    LedOff(BLUE2);
+
+    // Bit 2 will be purple
+    LedOff(RED1);
+    LedOff(BLUE1);
+
+    // MSB (Bit 3) will be cyan
+    LedOff(GREEN0);
+    LedOff(BLUE0);
+
+    if(u8Counter & 0x01) {
+      LedOn(RED3);
+    }
+
+    if(u8Counter & 0x02) {
+      LedOn(BLUE2);
+    }
+
+    if(u8Counter & 0x04) {
+      LedOn(RED1);
+      LedOn(BLUE1);
+    }
+
+    if(u8Counter & 0x08) {
+      LedOn(GREEN0);
+      LedOn(BLUE0);
+    }
+  }
      
 } /* end UserApp1SM_Idle() */
      
@@ -163,7 +212,7 @@ static void UserApp1SM_Idle(void)
 /* Handle an error */
 static void UserApp1SM_Error(void)          
 {
-  
+  printf("There was an error.");
 } /* end UserApp1SM_Error() */
 
 
