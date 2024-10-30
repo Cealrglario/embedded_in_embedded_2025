@@ -93,23 +93,10 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
-  LedOff(RED0);
-  LedOff(GREEN0);
-  LedOff(BLUE0);
-
-  LedOff(RED1);
-  LedOff(GREEN1);
-  LedOff(BLUE1);
-
-  LedOff(RED2);
-  LedOff(GREEN2);
-  LedOff(BLUE2);
-
-  LedOff(RED3);
-  LedOff(GREEN3);
-  LedOff(BLUE3);
-
-  LedOff(LCD_BL);
+  // Turn off all LEDs on the board by for-loop
+  for(u8 i = 0; i < U8_TOTAL_LEDS - 1; i++) {
+    LedOff((LedNameType)i);
+  }
 
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -161,6 +148,20 @@ static void UserApp1SM_Idle(void)
 {
   static u16 u16BlinkCount = 0;
   static u8 u8Counter = 0;
+  static u8 u8ColourCounter = 0;
+  // This will be used to "select" the LED we are changing based on a match with the masked bits
+  u8 u8Offset = 0; 
+
+  /* We will need a colour order to cycle through, which we can make Red, Yellow, Green, Cyan, Blue, Purple, White, which we
+  can cycle through with an array of arrays of size 3. */
+
+  static u8 u8ColourArray[][3] = {{RED0, 0xff, 0xff}, 
+                                  {RED0, GREEN0, 0xff}, 
+                                  {0xff, GREEN0, 0xff}, 
+                                  {0xff, GREEN0, BLUE0}, 
+                                  {0xff, 0xff, BLUE0}, 
+                                  {RED0, 0xff, BLUE0}, 
+                                  {RED0, GREEN0, BLUE0}};
 
   u16BlinkCount++;
 
@@ -172,37 +173,58 @@ static void UserApp1SM_Idle(void)
       u8Counter = 0;
     }
 
-    // LSB (Bit 0) will be red
-    LedOff(RED3);
-
-    // Bit 1 will be blue
-    LedOff(BLUE2);
-
-    // Bit 2 will be purple
-    LedOff(RED1);
-    LedOff(BLUE1);
-
-    // MSB (Bit 3) will be cyan
-    LedOff(GREEN0);
-    LedOff(BLUE0);
+    // Turn off all twelve LEDs (13-1 since we don't care about the backlight) in the dot matrix board by loop
+    for(u8 i = 0; i < (U8_TOTAL_LEDS - 1); i++) {
+      LedOff((LedNameType)i);
+    }
 
     if(u8Counter & 0x01) {
-      LedOn(RED3);
+      /* This is the LSB and thus the rightmost LED, so we must select the rightmost LED by setting the LED offset to 3.
+      this will make more sense when you read the following code */
+      u8Offset = 3;
+      for(u8 j = 0; j < 3; j++) {
+        // We don't want to turn the LED on if it's meant to be off
+        if(u8ColourArray[u8ColourCounter][j] != 0xff) {
+          LedOn(u8ColourArray[u8ColourCounter][j] + u8Offset);
+        }
+      }
     }
 
     if(u8Counter & 0x02) {
-      LedOn(BLUE2);
+      /* This is to the left of the LSB and thus we must select the corresponding LED by setting the LED offset to 2. 
+      This pattern will repeat for the rest of the LEDs. */
+      u8Offset = 2;
+      for(u8 j = 0; j < 3; j++) {
+        if(u8ColourArray[u8ColourCounter][j] != 0xff) {
+          LedOn(u8ColourArray[u8ColourCounter][j] + u8Offset);
+        }
+      }
     }
 
     if(u8Counter & 0x04) {
-      LedOn(RED1);
-      LedOn(BLUE1);
+      u8Offset = 1;
+      for(u8 j = 0; j < 3; j++) {
+        if(u8ColourArray[u8ColourCounter][j] != 0xff) {
+          LedOn(u8ColourArray[u8ColourCounter][j] + u8Offset);
+        }
+      }
     }
 
     if(u8Counter & 0x08) {
-      LedOn(GREEN0);
-      LedOn(BLUE0);
+      u8Offset = 0;
+      for(u8 j = 0; j < 3; j++) {
+        if(u8ColourArray[u8ColourCounter][j] != 0xff) {
+          LedOn(u8ColourArray[u8ColourCounter][j] + u8Offset);
+        }
+      }
     }
+
+    u8ColourCounter++;
+
+    if(u8ColourCounter == 7) {
+      u8ColourCounter = 0;
+    }
+
   }
      
 } /* end UserApp1SM_Idle() */
