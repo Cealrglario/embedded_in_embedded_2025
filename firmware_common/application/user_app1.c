@@ -92,6 +92,11 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  // Don't hardcode values. Use U8_TOTAL_LEDS, not 13 as a limit for i.
+  for(u8 i = 0; i < U8_TOTAL_LEDS; i++) {
+    LedOff((LedNameType)i); // This is inline type-casting. We are giving i the type of LedNameType, where 0 is RED0, and so on.
+  }
+
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -140,7 +145,49 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-     
+  static b1Red1blink = FALSE;
+  static LedRateType LedBlinkRate[] = {LED_1HZ, LED_2HZ, LED_4HZ, LED_8HZ};
+  static u8 CurrentBlinkRate = 0;
+
+  if(IsButtonPressed(BUTTON0)) {
+    LedOn(BLUE0);
+  } else {
+    LedOff(BLUE0);
+  }
+
+  if(WasButtonPressed(BUTTON1)) {
+    ButtonAcknowledge(RED1);
+
+    if(!b1Red1blink) {
+      b1Red1blink = TRUE;
+      LedBlink(RED1, LedBlinkRate[CurrentBlinkRate]);
+    } else {
+      b1Red1blink = FALSE;
+      LedOff(RED1);
+    }
+  }
+
+  if(IsButtonHeld(BUTTON0, 2000)) {
+    LedOn(LCD_BL);
+  }
+
+  if(!IsButtonPressed(BUTTON0)) {
+    LedOff(LCD_BL);
+  }
+
+  if(b1Red1blink && WasButtonPressed(BUTTON0)) {
+    ButtonAcknowledge(BUTTON0);
+
+    CurrentBlinkRate++;
+    /* DO NOT HARD CODE THE FOLLOWING LINE. Code it to automatically adjust to the size of the blink rate array (which isn't just the
+    number of blink rates, but rather the size of the entire array (memory wise) divided by the size of each LedRateType). */
+    if(CurrentBlinkRate == (sizeof(LedBlinkRate) / sizeof(LedRateType))) {
+      CurrentBlinkRate = 0;
+    }
+    
+    LedBlink(RED1, LedBlinkRate[CurrentBlinkRate]);
+  }
+
 } /* end UserApp1SM_Idle() */
      
 
