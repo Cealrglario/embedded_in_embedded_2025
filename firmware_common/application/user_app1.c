@@ -92,6 +92,15 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  PWMAudioSetFrequency(BUZZER1, C4);
+
+  for(u8 i = 0; i < U8_TOTAL_LEDS; i++) {
+    if((LedNameType)i == LCD_BL) {
+      continue;
+    }
+    LedOff((LedNameType)i);
+  }
+
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -140,9 +149,48 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
+  static u16 ToneArray[] = {C4, D4, E4, G4};
+  static u8 NoteIndex = 0;
+  static bool Incrementing = TRUE;
+
+  for(u8 i = 0; i < U8_TOTAL_LEDS - 1; i++) {
+    if((LedNameType)i == LCD_BL) {
+      continue;
+    }
+    LedOff((LedNameType)i);
+  }
+
+  LedOn((LedNameType)NoteIndex);
+
+  // Activate the buzzer with whatever its current frequency is.
+  if(IsButtonPressed(BUTTON0)) {
+    PWMAudioOn(BUZZER1);
+  } else {
+    PWMAudioOff(BUZZER1);
+  }
+
+  // Change the frequency of the buzzer whenever BUTTON1 is pressed.
+  if(WasButtonPressed(BUTTON1)) {
+    ButtonAcknowledge(BUTTON1);
+    
+    if(Incrementing) {
+      NoteIndex++;
+
+      if(NoteIndex == (u8)((sizeof(ToneArray) / sizeof(u16)) - 1)) { // We want to start decrementing at the last index, not past it.
+        Incrementing = FALSE;
+      }
+    } else {
+      NoteIndex--;
+      if(NoteIndex == 0) {
+        Incrementing = TRUE;
+      }
+    }
+
+    PWMAudioSetFrequency(BUZZER1, ToneArray[NoteIndex]);
+
+  }
      
 } /* end UserApp1SM_Idle() */
-     
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
