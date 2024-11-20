@@ -55,7 +55,11 @@ static void UserApp1SM_Error(void);
 /**********************************************************************************************************************
 Constants / Definitions
 **********************************************************************************************************************/
+#define U16_USER1_INPUT_BUFFER_SIZE (u16)(DEBUG_SCANF_BUFFER_SIZE + 1) /* Size of buffer for scanf messages in UserApp1
+plus space for a null terminator incase the input buffer is completely maxed out before scanning */
 
+/* REMINDER THAT WHEN DECLARING DEFINITIONS IN HEADER FILES YOU DON'T NEED TO EQUATE THEM, JUST STATE THE VALUE, AND YOU DON'T NEED
+SEMICOLONS AFTER THE END OF EACH LINE */
 
 #endif /* __USER_APP1_H */
 
