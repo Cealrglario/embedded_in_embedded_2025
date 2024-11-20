@@ -54,6 +54,8 @@ extern volatile u32 G_u32SystemTime1s;                    /*!< @brief From main.
 extern volatile u32 G_u32SystemFlags;                     /*!< @brief From main.c */
 extern volatile u32 G_u32ApplicationFlags;                /*!< @brief From main.c */
 
+extern u8 G_au8DebugScanfBuffer[DEBUG_SCANF_BUFFER_SIZE]; // From debug.c
+extern u8 G_u8DebugScanfCharCount;                        // From debug.c
 
 /***********************************************************************************************************************
 Global variable definitions with scope limited to this local application.
@@ -92,8 +94,9 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
-  PWMAudioSetFrequency(BUZZER1, C4);
+  PWMAudioSetFrequency(BUZZER1, C3);
 
+  // Initialize all LEDs
   for(u8 i = 0; i < U8_TOTAL_LEDS; i++) {
     if((LedNameType)i == LCD_BL) {
       continue;
@@ -149,10 +152,22 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-  static u16 ToneArray[] = {C4, D4, E4, G4};
-  static u8 NoteIndex = 0;
-  static bool Incrementing = TRUE;
+  static u32 Notes[] = {C3, C3S, D3, D3S, E3, F3, F3S, G3, G3S, A3, A3S, B3};
+  static u8 NoteBuffer[USERAPP1_USER_INPUT_NOTE_BUFFER]; // Buffer for reading keyboard inputs to play notes
+  static u8 CurrentNote;
+  static u8 CurrentOctave = U8_MIN_OCTAVE;
+  static u8 CurrentOctaveMultiplier[] = {1, 2, 4, 8};
+  static u16 NoteTimer = U16_NOTE_LENGTH;
+  static bool IsPlaying = FALSE;
+  static bool NotePlayed = FALSE;
 
+  // Clear the buffer for fresh input
+  for(u8 i = 0; i < USERAPP1_USER_INPUT_NOTE_BUFFER; i++)
+  {
+    NoteBuffer[i] = '\0';
+  }
+  
+  // Reset all LEDs again to make sure only one is on at any given time (excl. the LED dot matrix)
   for(u8 i = 0; i < U8_TOTAL_LEDS - 1; i++) {
     if((LedNameType)i == LCD_BL) {
       continue;
@@ -160,36 +175,77 @@ static void UserApp1SM_Idle(void)
     LedOff((LedNameType)i);
   }
 
-  LedOn((LedNameType)NoteIndex);
+  LedOn((LedNameType)CurrentOctave);
 
-  // Activate the buzzer with whatever its current frequency is.
-  if(IsButtonPressed(BUTTON0)) {
-    PWMAudioOn(BUZZER1);
-  } else {
-    PWMAudioOff(BUZZER1);
+  if(G_u8DebugScanfCharCount != 0)
+  {
+    NotePlayed = TRUE;
   }
 
-  // Change the frequency of the buzzer whenever BUTTON1 is pressed.
-  if(WasButtonPressed(BUTTON1)) {
-    ButtonAcknowledge(BUTTON1);
-    
-    if(Incrementing) {
-      NoteIndex++;
+  if(IsPlaying)
+  {
+    NoteTimer--;
 
-      if(NoteIndex == (u8)((sizeof(ToneArray) / sizeof(u16)) - 1)) { // We want to start decrementing at the last index, not past it.
-        Incrementing = FALSE;
+    if(NoteTimer == 0)
+    {
+      NoteTimer = U16_NOTE_LENGTH;
+      PWMAudioOff(BUZZER1);
+      IsPlaying = FALSE;
+      DebugPrintf("\n\rFinished playing note.\n\r");
+      DebugLineFeed();
+    }
+  } else if(NotePlayed)
+  {
+    NotePlayed = FALSE; // Clear the flag
+
+    DebugPrintf("\n\rNote Detected: ");
+    DebugPrintf(G_au8DebugScanfBuffer);
+    DebugLineFeed();
+
+    DebugScanf(NoteBuffer);
+    DebugPrintf("Note in buffer: ");
+    DebugPrintf(NoteBuffer);
+    DebugLineFeed();
+
+    CurrentNote = mapInputToNote(NoteBuffer[0]);
+
+    IsPlaying = TRUE;
+    PWMAudioSetFrequency(BUZZER1, Notes[CurrentNote] * CurrentOctaveMultiplier[CurrentOctave]);
+    PWMAudioOn(BUZZER1);
+    DebugPrintf("\n\rPlaying note.");
+
+  } else
+  {
+    if(WasButtonPressed(BUTTON0))
+    {
+      ButtonAcknowledge(BUTTON0);
+      LedOff((LedNameType)CurrentOctave);
+      
+      if(CurrentOctave > U8_MIN_OCTAVE)
+      {
+        CurrentOctave--;
+      } else
+      {
+        CurrentOctave = U8_MIN_OCTAVE;
       }
-    } else {
-      NoteIndex--;
-      if(NoteIndex == 0) {
-        Incrementing = TRUE;
-      }
+      LedOn((LedNameType)CurrentOctave);
     }
 
-    PWMAudioSetFrequency(BUZZER1, ToneArray[NoteIndex]);
-
-  }
-     
+    if(WasButtonPressed(BUTTON1))
+    {
+      ButtonAcknowledge(BUTTON1);
+      LedOff((LedNameType)CurrentOctave);
+      
+      if(CurrentOctave < U8_MAX_OCTAVE)
+      {
+        CurrentOctave++;
+      } else
+      {
+        CurrentOctave = U8_MAX_OCTAVE;
+      }
+      LedOn((LedNameType)CurrentOctave);
+    }
+  }     
 } /* end UserApp1SM_Idle() */
 
 /*-------------------------------------------------------------------------------------------------------------------*/
