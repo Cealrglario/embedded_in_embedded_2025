@@ -378,7 +378,7 @@ def get_jlink_srch_path(exe_name: str):
     if Utils.is_win32:
 
         install_roots = [
-            "C:\\Program Files\\SEGGER\\"
+            "C:\\Program Files\\SEGGER"
         ]
 
     elif Utils.unversioned_sys_platform() == "darwin":
@@ -442,7 +442,7 @@ def get_gcc_srch_path_win32():
     import winreg
 
     REGISTRY_PATHS = [(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\ARM")]
-    INSTALL_PATHS = ["C:\\Program Files (x86)\\Arm GNU Toolchain arm-none-eabi"]
+    INSTALL_PATHS = ["C:\\Program Files (x86)\\Arm GNU Toolchain arm-none-eabi\\13.3 rel1\\bin"]
 
     gcc_vers = defaultdict(set)  # Map from version numbers to discovered paths.
 
