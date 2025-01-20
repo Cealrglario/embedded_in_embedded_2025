@@ -60,6 +60,7 @@ Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
+static u8 UserApp1_au8Name;
 //static u32 UserApp1_u32Timeout;                           /*!< @brief Timeout counter used across states */
 
 
@@ -102,6 +103,11 @@ void UserApp1Initialize(void)
     /* The task isn't properly initialized, so shut it down and don't run */
     UserApp1_pfStateMachine = UserApp1SM_Error;
   }
+
+  LcdClearScreen();
+  UserApp1_au8Name = "Carl";
+  PixelAddressType NameLocation = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+  LcdLoadString(UserApp1_au8Name, LCD_FONT_SMALL, &NameLocation);
 
 } /* end UserApp1Initialize() */
 
