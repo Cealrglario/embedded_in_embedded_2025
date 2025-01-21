@@ -60,7 +60,8 @@ Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
-static u8 UserApp1_au8Name;
+static u8 UserApp1_au8Name[] = "Carl";
+static PixelAddressType NameLocation = {U16_LCD_TOP_MOST_ROW, U16_LCD_LEFT_MOST_COLUMN};
 //static u32 UserApp1_u32Timeout;                           /*!< @brief Timeout counter used across states */
 
 
@@ -105,9 +106,12 @@ void UserApp1Initialize(void)
   }
 
   LcdClearScreen();
-  UserApp1_au8Name = "Carl";
-  PixelAddressType NameLocation = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
   LcdLoadString(UserApp1_au8Name, LCD_FONT_SMALL, &NameLocation);
+  
+
+  // PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+  // u8 au8TestString[] = "Testing";
+  // LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
 
 } /* end UserApp1Initialize() */
 
@@ -146,6 +150,42 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
+  static PixelBlockType G_sLcdClearLine = {
+  .u16RowStart = U8_LCD_SMALL_FONT_LINE0,
+  .u16ColumnStart = 0,
+  .u16RowSize = U8_LCD_SMALL_FONT_ROWS,
+  .u16ColumnSize = U16_LCD_COLUMNS
+  };
+
+  static u8 u8CurrentRow = 0;
+
+  if (WasButtonPressed(BUTTON0)) {
+    ButtonAcknowledge(BUTTON0);
+    
+    if (u8CurrentRow <= U8_LCD_SMALL_FONT_ROWS) {
+      // DebugLineFeed();
+      // DebugPrintf("Button Click");
+      LcdClearPixels(&G_sLcdClearLine);
+      u8CurrentRow++;
+      G_sLcdClearLine.u16RowStart = U8_LCD_SMALL_FONT_ROWS * u8CurrentRow;
+      NameLocation.u16PixelRowAddress += U8_LCD_SMALL_FONT_ROWS;
+      LcdLoadString(UserApp1_au8Name, LCD_FONT_SMALL, &NameLocation);
+    }
+  }
+
+  if (WasButtonPressed(BUTTON1)) {
+    ButtonAcknowledge(BUTTON1);
+
+    if (u8CurrentRow != 0) {
+      // DebugLineFeed();
+      // DebugPrintf("Button Click");
+      LcdClearPixels(&G_sLcdClearLine);
+      u8CurrentRow--;
+      G_sLcdClearLine.u16RowStart = U8_LCD_SMALL_FONT_ROWS * u8CurrentRow;
+      NameLocation.u16PixelRowAddress -= U8_LCD_SMALL_FONT_ROWS;
+      LcdLoadString(UserApp1_au8Name, LCD_FONT_SMALL, &NameLocation);
+    }
+  }
      
 } /* end UserApp1SM_Idle() */
      
