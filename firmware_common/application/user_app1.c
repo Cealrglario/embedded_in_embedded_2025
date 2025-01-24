@@ -264,7 +264,21 @@ static void UserApp1SM_ChannelOpen(void)
   //   } /* end ANT_TICK */
   // } /* end AntReadAppMessageBuffer() */
 
-  
+  static u8 au8TestMessage[] = {0, 0, 0, 0, 0xA5, 0, 0, 0};
+
+  if (AntReadAppMessageBuffer()) { // Simply reading the message like this clears the message buffer
+      if (G_eAntApiCurrentMessageClass == ANT_DATA) {
+        DebugPrintf("ANT_DATA message received");
+        DebugLineFeed();
+      }
+      else if (G_eAntApiCurrentMessageClass == ANT_TICK) {
+        // An ANT_TICK is sent by Ant whenever a channel period has passed (250ms)
+        // This is when new data should be queued to send
+      }
+  }
+
+
+
 
 } /* end UserApp1SM_ChannelOpen() */
 
