@@ -161,7 +161,7 @@ PixelBlockType G_sLcdClearLine6 =
   .u16ColumnSize = U16_LCD_COLUMNS
 };
 
-PixelBlockType G_sLcdClearLine7 = 
+extern PixelBlockType G_sLcdClearLine7 = 
 {
   .u16RowStart = U8_LCD_SMALL_FONT_LINE7,
   .u16ColumnStart = 0,

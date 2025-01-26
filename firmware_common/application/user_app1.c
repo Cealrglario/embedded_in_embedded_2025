@@ -265,21 +265,51 @@ static void UserApp1SM_ChannelOpen(void)
   // } /* end AntReadAppMessageBuffer() */
 
   static u8 au8TestMessage[] = {0, 0, 0, 0, 0xA5, 0, 0, 0}; // BUTTONS 0-4 STATUS, CONSTANT, 3 BYTE COUNTER (256^2 + 256^1 + 256^0)
+  static PixelAddressType sStringLocation;
+  u8 au8DataContent[] = "xxxxxxxxxxxxxxxx";
+  extern PixelBlockType G_sLcdClearLine7; /* This has type "extern" since we are obtaining the ALREADY EXISTING PixelBlockType
+                                          that handles clearing Line 7 from lcd-NHD-C12864LZ.c (extern allows us to use objects in other files,
+                                          as long as that object in the other file also has the type "extern") */
                                                                                                  
   if (AntReadAppMessageBuffer()) { // Simply reading the message like this clears the message buffer
 
-
       if (G_eAntApiCurrentMessageClass == ANT_DATA) {
-        // To do
-      }
+        // We reach this point if we (the master) receive data from the slave (our laptop)
 
+        // Parses each of the bytes sent by Ant so we can display it in ASCII on the LCD
+        for (u8 i = 0; i < ANT_DATA_BYTES; i++) {
+          // Each byte is given two spaces on the LCD (2 * i, then 2 * i + 1). If confused, think of the indices when i = 0
+          au8DataContent[2 * i] = HexToASCIICharUpper(G_au8AntApiCurrentMessageBytes[i] / 16); 
+          au8DataContent[(2 * i) + 1] = HexToASCIICharUpper(G_au8AntApiCurrentMessageBytes[i] % 16);
+        }
+
+        sStringLocation.u16PixelColumnAddress =
+        U16_LCD_CENTER_COLUMN - ( strlen((char const*)au8DataContent) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
+        /* The line above obtains the center pixel in the LCD even if the size of the message changes. It does this by
+        taking the length of the string in code, maps it to how many pixels that string would take up in "small font" on
+        the LCD, gets half that length, and then subtracts the center column by that amount so that half the string will
+        be printed before the centerpoint, and half will be printed after, thus printing the string in the middle . */
+        sStringLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE7;
+        LcdClearPixels(&G_sLcdClearLine7);
+        LcdLoadString(au8DataContent, LCD_FONT_SMALL, &sStringLocation);
+      }
 
       else if (G_eAntApiCurrentMessageClass == ANT_TICK) {
         // An ANT_TICK is sent by Ant whenever a channel period has passed (250ms)
         // This is when new data is queued to send (thus is also when the message counter should be incremented)
-        DebugPrintf("Message queued");
-        DebugLineFeed();
 
+        au8TestMessage[0] = 0x00;
+        au8TestMessage[1] = 0x00;
+        au8TestMessage[2] = 0x00;
+        au8TestMessage[3] = 0x00;
+
+        if (IsButtonPressed(BUTTON0)) {
+          au8TestMessage[0] = 0xff;
+        }
+
+        if (IsButtonPressed(BUTTON1)) {
+          au8TestMessage[1] = 0xff;
+        }
 
         // Just a simple 3 byte counter incrementer
         au8TestMessage[7]++;
@@ -290,16 +320,10 @@ static void UserApp1SM_ChannelOpen(void)
           }
         }
 
-
         AntQueueBroadcastMessage(U8_ANT_CHANNEL_USERAPP, au8TestMessage); // Broadcast the message au8TestMessage to channel U8_ANT_CHANNEL_USERAPP
-
 
       }
   }
-
-
-
-
 
 } /* end UserApp1SM_ChannelOpen() */
 
