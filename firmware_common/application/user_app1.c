@@ -264,18 +264,39 @@ static void UserApp1SM_ChannelOpen(void)
   //   } /* end ANT_TICK */
   // } /* end AntReadAppMessageBuffer() */
 
-  static u8 au8TestMessage[] = {0, 0, 0, 0, 0xA5, 0, 0, 0};
-
+  static u8 au8TestMessage[] = {0, 0, 0, 0, 0xA5, 0, 0, 0}; // BUTTONS 0-4 STATUS, CONSTANT, 3 BYTE COUNTER (256^2 + 256^1 + 256^0)
+                                                                                                 
   if (AntReadAppMessageBuffer()) { // Simply reading the message like this clears the message buffer
+
+
       if (G_eAntApiCurrentMessageClass == ANT_DATA) {
-        DebugPrintf("ANT_DATA message received");
-        DebugLineFeed();
+        // To do
       }
+
+
       else if (G_eAntApiCurrentMessageClass == ANT_TICK) {
         // An ANT_TICK is sent by Ant whenever a channel period has passed (250ms)
-        // This is when new data should be queued to send
+        // This is when new data is queued to send (thus is also when the message counter should be incremented)
+        DebugPrintf("Message queued");
+        DebugLineFeed();
+
+
+        // Just a simple 3 byte counter incrementer
+        au8TestMessage[7]++;
+        if (au8TestMessage[7] == 0) {
+          au8TestMessage[6]++;
+          if (au8TestMessage[6] == 0) {
+            au8TestMessage[5]++;
+          }
+        }
+
+
+        AntQueueBroadcastMessage(U8_ANT_CHANNEL_USERAPP, au8TestMessage); // Broadcast the message au8TestMessage to channel U8_ANT_CHANNEL_USERAPP
+
+
       }
   }
+
 
 
 
