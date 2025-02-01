@@ -64,7 +64,9 @@ extern AntExtendedDataType G_sAntApiCurrentMessageExtData;                // Fro
 Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
-static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
+static fnCode_type UserApp1_pfStateMachine;                 /*!< @brief The state machine function pointer */
+static u32 UserApp1_u32DataMsgCount = 0;                    // ANT_DATA packet counter
+static u32 UserApp1_u32TickMsgCount = 0;                    // ANT_TICK packet counter
 //static u32 UserApp1_u32Timeout;                           /*!< @brief Timeout counter used across states */
 
 
@@ -98,11 +100,14 @@ Promises:
 void UserApp1Initialize(void)
 {
   AntAssignChannelInfoType sChannelInfo;
+  PixelAddressType sStringLocation;
+  u8 au8WelcomeMessage[] = "ANT Slave Demo";
+  extern PixelBlockType G_sLcdClearLine7;
 
   if(AntRadioStatusChannel(U8_ANT_CHANNEL_USERAPP) == ANT_UNCONFIGURED)
   {
     sChannelInfo.AntChannel = U8_ANT_CHANNEL_PERIOD_HI_USERAPP;
-    sChannelInfo.AntChannelType = CHANNEL_TYPE_MASTER;
+    sChannelInfo.AntChannelType = CHANNEL_TYPE_SLAVE;
     sChannelInfo.AntChannelPeriodHi = U8_ANT_CHANNEL_PERIOD_HI_USERAPP;
     sChannelInfo.AntChannelPeriodLo = U8_ANT_CHANNEL_PERIOD_LO_USERAPP;
     
@@ -119,20 +124,27 @@ void UserApp1Initialize(void)
     {
       sChannelInfo.AntNetworkKey[i] = ANT_DEFAULT_NETWORK_KEY;
     }
-    
-    AntAssignChannel(&sChannelInfo);
   }  
 
   /* Initialize the LCD message */
+  LedOn(RED0);
+
+  // Write the LCD message in the middle of the last row
+  sStringLocation.u16PixelColumnAddress =
+    U16_LCD_CENTER_COLUMN - (strlen((char const*)au8WelcomeMessage) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2);
+  sStringLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE7;
+  LcdClearPixels(&G_sLcdClearLine7);
+  LcdLoadString(au8WelcomeMessage, LCD_FONT_SMALL, &sStringLocation);
 
   /* If good initialization, set state to Idle */
-  if( 1 )
+  if(AntAssignChannel(&sChannelInfo))
   {
     UserApp1_pfStateMachine = UserApp1SM_WaitAntReady;
   }
   else
   {
     /* The task isn't properly initialized, so shut it down and don't run */
+    LedBlink(RED0, LED_4HZ);
     UserApp1_pfStateMachine = UserApp1SM_Error;
   }
 
@@ -175,29 +187,37 @@ static void UserApp1SM_WaitAntReady(void)
 {
   if(AntRadioStatusChannel(U8_ANT_CHANNEL_USERAPP) == ANT_CONFIGURED)
   {
-    if(AntOpenChannelNumber(U8_ANT_CHANNEL_USERAPP))
-    {
-      UserApp1_pfStateMachine = UserApp1SM_WaitChannelOpen;
-    }
-    else
-    {
-      UserApp1_pfStateMachine = UserApp1SM_Error;
-    }
-
-  } /* end if(AntOpenChannelNumber)... */
+    LedOn(GREEN0);
+    UserApp1_pfStateMachine = UserApp1SM_Idle;
+  }
+     /* end if(AntOpenChannelNumber)... */
 } /* end UserApp1SM_WaitAntReady() */
 
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Hold here until ANT confirms the channel is open */
-static void UserApp1SM_WaitChannelOpen(void)
+static void UserApp1SM_WaitChannelOpen(void) // GREEN0 is blinking at 2hz here
 {
   if(AntRadioStatusChannel(U8_ANT_CHANNEL_USERAPP) == ANT_OPEN)
   {
+    LedOn(GREEN0);
     UserApp1_pfStateMachine = UserApp1SM_ChannelOpen;
   }
 
 } /* end UserApp1SM_WaitChannelOpen() */
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+/* Hold here until ANT confirms the channel is closed */
+static void UserApp1SM_WaitChannelClose(void) // GREEN0 is blinking at 2hz here
+{
+  if(AntRadioStatusChannel(U8_ANT_CHANNEL_USERAPP) == ANT_CLOSED)
+  {
+    LedOn(GREEN0);
+    LedOn(RED0);
+    UserApp1_pfStateMachine = UserApp1SM_Idle;
+  }
+
+} /* end UserApp1SM_WaitChannelClose() */
 
 
 /*-------------------------------------------------------------------------------------------------------------------*/
@@ -209,6 +229,15 @@ static void UserApp1SM_ChannelOpen(void)
   u8 au8DataContent[] = "xxxxxxxxxxxxxxxx";
 
   extern PixelBlockType G_sLcdClearLine7;  /* From lcd-NHD-C12864LZ.c */
+
+  if(WasButtonPressed(BUTTON0)) { // Button 0 will close the channel if it's already open
+    ButtonAcknowledge(BUTTON0);
+
+    AntCloseChannelNumber(U8_ANT_CHANNEL_USERAPP);
+
+    LedBlink(GREEN0, LED_2HZ);
+    UserApp1_pfStateMachine = UserApp1SM_WaitChannelClose;
+  }
 
   if( AntReadAppMessageBuffer() )
   {
@@ -266,8 +295,18 @@ static void UserApp1SM_ChannelOpen(void)
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* What does this state do? */
-static void UserApp1SM_Idle(void)
+static void UserApp1SM_Idle(void) // GREEN0 and RED0 LED is on here (yellow)
 {
+  if(WasButtonPressed(BUTTON0)) {
+    ButtonAcknowledge(BUTTON0);
+
+    AntOpenChannelNumber(U8_ANT_CHANNEL_USERAPP);
+
+    LedOff(RED0);
+    LedBlink(GREEN0, LED_2HZ);
+
+    UserApp1_pfStateMachine = UserApp1SM_WaitChannelOpen;
+  }
      
 } /* end UserApp1SM_Idle() */
      
@@ -276,7 +315,7 @@ static void UserApp1SM_Idle(void)
 /* Handle an error */
 static void UserApp1SM_Error(void)          
 {
-  
+ 
 } /* end UserApp1SM_Error() */
 
 
