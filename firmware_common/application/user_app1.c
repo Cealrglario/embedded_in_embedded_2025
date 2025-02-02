@@ -67,6 +67,7 @@ Variable names shall start with "UserApp1_<type>" and be declared as static.
 static fnCode_type UserApp1_pfStateMachine;                 /*!< @brief The state machine function pointer */
 static u32 UserApp1_u32DataMsgCount = 0;                    // ANT_DATA packet counter
 static u32 UserApp1_u32TickMsgCount = 0;                    // ANT_TICK packet counter
+static u8 UserApp1_u8LastState = 0xff;                      // Records the last state of the event code index of TICK message
 //static u32 UserApp1_u32Timeout;                           /*!< @brief Timeout counter used across states */
 
 
@@ -227,6 +228,8 @@ static void UserApp1SM_ChannelOpen(void)
   static u8 au8TestMessage[] = {0, 0, 0, 0, 0xA5, 0, 0, 0};
   static PixelAddressType sStringLocation;
   u8 au8DataContent[] = "xxxxxxxxxxxxxxxx";
+  UserApp1_u8LastState = 0xff;
+  static u8 au8TickMessage[] = "EVENT x\n\r"; // We'll replace "x" with the current event code
 
   extern PixelBlockType G_sLcdClearLine7;  /* From lcd-NHD-C12864LZ.c */
 
@@ -239,10 +242,27 @@ static void UserApp1SM_ChannelOpen(void)
     UserApp1_pfStateMachine = UserApp1SM_WaitChannelClose;
   }
 
+  // In case the slave channel closes on its own
+  if(AntRadioStatusChannel(U8_ANT_CHANNEL_USERAPP) != ANT_OPEN) { //
+    UserApp1_u8LastState = 0xff;
+    DebugPrintf("Last connected Channel ID: ");
+    DebugPrintf(U8_ANT_DEVICE_HI_USERAPP);
+    DebugPrintf(U8_ANT_DEVICE_LO_USERAPP);
+    DebugLineFeed();
+    LedOff(BLUE0);
+    LedOff(GREEN0);
+    LedBlink(GREEN0, LED_2HZ);
+
+    UserApp1_pfStateMachine = UserApp1SM_WaitChannelClose;
+  }
+
   if( AntReadAppMessageBuffer() )
   {
     if(G_eAntApiCurrentMessageClass == ANT_DATA)
     {
+      LedOff(GREEN0);
+      LedOn(BLUE0);
+      UserApp1_u32DataMsgCount++;
       /* We got some data! Convert it to displayable ASCII characters*/   
       for(u8 i = 0; i < ANT_DATA_BYTES; i++)
       {
@@ -259,34 +279,43 @@ static void UserApp1SM_ChannelOpen(void)
     }
     else if (G_eAntApiCurrentMessageClass == ANT_TICK)
     {
-      /* Check the buttons and update corresponding slot in au8TestMessage */
-      au8TestMessage[0] = 0x00;
-      au8TestMessage[1] = 0x00;
-      au8TestMessage[2] = 0x00;
-      au8TestMessage[3] = 0x00;
+      UserApp1_u32TickMsgCount++;
 
-      if( IsButtonPressed(BUTTON0) )
-      {
-        au8TestMessage[0] = 0xff;
-      }
-      
-      if( IsButtonPressed(BUTTON1) )
-      {
-        au8TestMessage[1] = 0xff;
-      }
+      // If the current known state has changed via the event code in an ANT_TICK message
+      if (UserApp1_u8LastState != G_au8AntApiCurrentMessageBytes[ANT_TICK_MSG_EVENT_CODE_INDEX]) {
+        UserApp1_u8LastState = G_au8AntApiCurrentMessageBytes[ANT_TICK_MSG_EVENT_CODE_INDEX];
+        au8TickMessage[6] = HexToASCIICharUpper(UserApp1_u8LastState); // Update the event code in the debug terminal
+        DebugPrintf(au8TickMessage); // Send a debug message to the debug terminal
+        DebugLineFeed();
 
-      /* A channel period has gone by: typically this is when new
-      data should be queued to send */
-      au8TestMessage[7]++;
-      if(au8TestMessage[7] == 0)
-      {
-        au8TestMessage[6]++;
-        if(au8TestMessage[6] == 0)
-        {
-          au8TestMessage[5]++;
+        switch (UserApp1_u8LastState) { // Reacting to different ANT event codes (refer to antdefines.h for meanings of codes)
+          case RESPONSE_NO_ERROR: {
+            break; // Don't worry about this for now
+          }
+
+          case EVENT_RX_FAIL: {
+            LedOff(GREEN0);
+            LedBlink(BLUE0, LED_4HZ);
+            break;
+          }
+
+          case EVENT_RX_FAIL_GO_TO_SEARCH: {
+            LedOff(BLUE0);
+            LedOn(GREEN0);
+            break;
+          }
+
+          case EVENT_RX_SEARCH_TIMEOUT: {
+            DebugPrintf("Search timeout\r\n");
+            break;
+          }
+
+          default: {
+            DebugPrintf("Unknown event\r\n");
+            break;
+          }
         }
       }
-      AntQueueBroadcastMessage(U8_ANT_CHANNEL_USERAPP, au8TestMessage);
     } /* end ANT_TICK */
   } /* end AntReadAppMessageBuffer() */
 

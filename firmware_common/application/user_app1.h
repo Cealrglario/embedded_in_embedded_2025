@@ -69,8 +69,6 @@ Constants / Definitions
 #define U8_ANT_FREQUENCY_USERAPP            (u8)50             /* 2400MHz + this number 0 – 99 */ 
 #define U8_ANT_TX_POWER_USERAPP             RADIO_TX_POWER_4DBM /* RADIO_TX_POWER_xxx */
 
-
-
 #endif /* __USER_APP1_H */
 
 /*--------------------------------------------------------------------------------------------------------------------*/
