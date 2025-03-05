@@ -37,6 +37,8 @@ void ClimateMonitorRunActiveState(void);
 State Machine Declarations
 ***********************************************************************************************************************/
 static void ClimateMonitorSM_Idle(void);    
+static void ClimateMonitorSM_SleepSHTC3(void);
+static void ClimateMonitorSM_WakeSHTC3(void);
 static void ClimateMonitorSM_VerifySHTC3(void);
 static void ClimateMonitorSM_TakeMeasurementSHTC3(void);
 static void ClimateMonitorSM_DisplayInfo(void);
@@ -56,6 +58,8 @@ Constants / Definitions
 #define U8_SHTC3_MEASURE_LSB        (u8)0xA2 /* LSB of the command to tell the SHTC3 sensor to begin a measurement */
 #define U8_SHTC3_READ_ID_MSB        (u8)0xEF /* MSB of the command to read the ID register of the SHTC3 sensor */
 #define U8_SHTC3_READ_ID_LSB        (u8)0xC8 /* LSB of the command to read the ID register of the SHTC3 sensor */
+#define U8_SHTC3_RESET_MSB          (u8)0x80 /* MSB of the command to soft reset the SHTC3 sensor */
+#define U8_SHTC3_RESET_LSB          (u8)0x5D /* LSB of the command to soft reset the SHTC3 sensor */
 
 /* SHTC3-relevant Constants */
 #define U8_SHTC3_I2C_ADDRESS        (u8)0x70 /* I2C address of the SHTC3 sensor */

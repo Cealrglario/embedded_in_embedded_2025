@@ -75,18 +75,23 @@ Promises:
 - NONE
 
 */
-void ClimateMonitorInitialize(void)
-{
-  /* If good initialization, set state to Idle */
-  if( 1 )
-  {
-    ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
-  }
-  else
-  {
-    /* The task isn't properly initialized, so shut it down and don't run */
-    ClimateMonitor_pfStateMachine = ClimateMonitorSM_Error;
-  }
+void ClimateMonitorInitialize(void) {
+    ErrorStatusType eErrorStatus = SUCCESS;
+
+    /* Initialize I2C pins */
+    eErrorStatus += BladeRequestPin(BLADE_PIN8, PERIPHERAL);
+    eErrorStatus += BladeRequestPin(BLADE_PIN9, PERIPHERAL);
+
+    /* If good initialization, set state to Idle */
+    if(eErrorStatus == SUCCESS)
+    {
+      ClimateMonitor_pfStateMachine = ClimateMonitorSM_SleepSHTC3;
+    }
+    else
+    {
+      /* The task isn't properly initialized, so shut it down and don't run */
+      ClimateMonitor_pfStateMachine = ClimateMonitorSM_Error;
+    }
 
 } /* end ClimateMonitorInitialize() */
 
@@ -122,6 +127,60 @@ void ClimateMonitorRunActiveState(void)
 State Machine Function Definitions
 **********************************************************************************************************************/
 /*-------------------------------------------------------------------------------------------------------------------*/
+
+static void ClimateMonitorSM_SleepSHTC3(void) {
+    u8 au8SHTC3_Sleep[] = {U8_SHTC3_SLEEP_MSB, U8_SHTC3_SLEEP_LSB};
+
+    TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8SHTC3_Sleep, TWI_STOP);
+
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_WakeSHTC3;
+}
+
+static void ClimateMonitorSM_WakeSHTC3(void) {
+    u8 au8SHTC3_Wake[] = {U8_SHTC3_WAKEUP_MSB, U8_SHTC3_WAKEUP_LSB};
+
+    TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8SHTC3_Wake, TWI_STOP);
+
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_VerifySHTC3;
+}
+
+static void ClimateMonitorSM_VerifySHTC3(void) {
+    u8 au8VerifySHTC3[] = {U8_SHTC3_READ_ID_MSB, U8_SHTC3_READ_ID_LSB};
+    u8 au8SHTC3_Response[3] = {0, 0, 0};
+
+    TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8VerifySHTC3, TWI_NO_STOP);
+    TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3_Response, 3);
+
+    DebugPrintf("Response (each line is one byte): ");
+    DebugLineFeed();
+
+    for (int i = 0; i < (sizeof(au8SHTC3_Response) / sizeof(u8)); i++) {
+      DebugPrintNumber(au8SHTC3_Response[i]);
+      DebugLineFeed();
+    }
+
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
+}
+
+static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
+  u8 au8TakeMeasurementSHTC3[] = {U8_SHTC3_MEASURE_MSB, U8_SHTC3_MEASURE_LSB};
+  u8 au8SHTC3Measurement[6] = {0, 0, 0, 0, 0, 0};
+
+  TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8TakeMeasurementSHTC3, TWI_NO_STOP);
+  TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3Measurement, 6);
+
+  DebugPrintf("Measurement (each line is one byte): ");
+  DebugLineFeed();
+
+  for (int i = 0; i < (sizeof(au8SHTC3Measurement) / sizeof(u8)); i++) {
+    DebugPrintNumber(au8SHTC3Measurement[i]);
+    DebugLineFeed();
+  }
+
+  ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
+
+}
+
 /* What does this state do? */
 static void ClimateMonitorSM_Idle(void)
 {
