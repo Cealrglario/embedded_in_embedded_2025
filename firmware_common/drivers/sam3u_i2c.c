@@ -3,7 +3,7 @@
 @brief MASTER ONLY.  Provides a driver to use TWI0 (IIC/I2C) peripheral to send and receive data using 
 interrupts and PDC direct memory access.
 
-Currently Set at 200kHz Master Mode.
+Currently Set at 50kHz Master Mode.
 
 Due to the nature of I2C use-cases, this driver does not require tasks to request and release it.
 Read / write messages information is queued locally with all required details.  The driver will
@@ -89,7 +89,7 @@ Read operations do not have an associated message in the Message task queue.
 Requires:
 - Master mode
 
-@param u8SlaveAddress_ holds the target's I²C address
+@param u8SlaveAddress_ holds the target's Iï¿½C address
 @param pu8RxBuffer_ has the space to save the data
 @param u32Size_ is the number of bytes to receive
 
@@ -162,7 +162,7 @@ Read operations do not have an associated message in the Message task queue.
 Requires:
 - Master mode
 
-@param u8SlaveAddress_ holds the target's I²C address
+@param u8SlaveAddress_ holds the target's Iï¿½C address
 @param u8InternalAddress_ is the slave's internal address to start reading
 @param pu8RxBuffer_ has the space to save the data
 @param u32Size_ is the number of bytes to receive
@@ -236,7 +236,7 @@ Requires:
 - if a transmission is in progress, the node in the buffer that is currently being sent will not 
   be destroyed during this function.
 
-@param u8SlaveAddress_ holds the target's I²C address
+@param u8SlaveAddress_ holds the target's Iï¿½C address
 @param u32Size_ is the number of bytes to send NOT including the address byte
 @param pu8Data_ points to the start of the data to send
 @param eStop_ is the type of operation
