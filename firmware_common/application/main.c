@@ -89,6 +89,7 @@ int main(void)
  
   /* Application initialization */
   BladeApiInitialize();
+  ClimateMonitorInitialize();
   UserApp1Initialize();
   UserApp2Initialize();
   UserApp3Initialize();
@@ -129,6 +130,7 @@ int main(void)
 
     /* Applications */
     BladeApiRunActiveState();
+    ClimateMonitorRunActiveState();
     UserApp1RunActiveState();
     UserApp2RunActiveState();
     UserApp3RunActiveState();
