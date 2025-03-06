@@ -46,6 +46,7 @@ Includes
 ***********************************************************************************************************************/
 /* Common header files */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "AT91SAM3U4.h"
 #include "exceptions.h"
