@@ -1285,7 +1285,7 @@ Dot Matrix: Blade and R01 EIE_DOTMATRIX accelerometer
        200 kHz - 0x00021D1D
        400 kHz - 0x00030707  *Maximum rate*
 */
-#define EIE_TWI_CWGR_INIT (u32)0x00027777
+#define EIE_TWI_CWGR_INIT (u32)0x00023B3B
 /*
     31-20 [0] Reserved
     
