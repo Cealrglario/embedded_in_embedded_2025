@@ -200,58 +200,87 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   extern PixelBlockType G_sLcdClearLine4;
   u8 au8TempReading[20];
   u8 au8HumidityReading[20];
+  u8 au8ClimateInfo[20];
+  u8 au8Recommedation[20];
 
   /* Select output climate info message based on data */
   if (ClimateMonitor_u32SHTC3TempReading <= (u32)-20) {
     // Frigid!
-  }
+    strcpy((char*)au8ClimateInfo, "Extremely cold.");
+    strcpy((char*)au8Recommedation, "Wear a heavy coat!");
+}
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)0 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Cold and chilly!
+    strcpy((char*)au8ClimateInfo, "Cold and very humid.");
+    strcpy((char*)au8Recommedation, "Breathable coat!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)0) {
     // Cool, crisp fresh air
+    strcpy((char*)au8ClimateInfo, "Cold and crisp.");
+    strcpy((char*)au8Recommedation, "Wear some layers!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)10 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Mild, but very humid.
+    strcpy((char*)au8ClimateInfo, "Mild but very humid.");
+    strcpy((char*)au8Recommedation, "Breathable layers!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)10) {
     // Mild, wear a light jacket
+    strcpy((char*)au8ClimateInfo, "Mild, cool air.");
+    strcpy((char*)au8Recommedation, "Wear a light coat!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)15 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Warm but very humid! Breathable clothing.
+    strcpy((char*)au8ClimateInfo, "Warm but humid.");
+    strcpy((char*)au8Recommedation, "Breathable clothing!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)15) {
     // Warm, enjoy the weather, wear a sweater!
+    strcpy((char*)au8ClimateInfo, "Warm and crisp.");
+    strcpy((char*)au8Recommedation, "Wear a sweater!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)25 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Almost perfect, but too humid. Breathable clothing.
+    strcpy((char*)au8ClimateInfo, "Ideal but humid.");
+    strcpy((char*)au8Recommedation, "Airy clothing!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)25) {
     // Perfect temperature! Go outside!
+    strcpy((char*)au8ClimateInfo, "Perfect conditions.");
+    strcpy((char*)au8Recommedation, "Go outside!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)35 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)65) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 
+    (u32)35 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)65) {
     // Hot and humid! Stay in A/C room.
+    strcpy((char*)au8ClimateInfo, "Very hot and humid.");
+    strcpy((char*)au8Recommedation, "Stay dry and cool!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= (u32)35) {
     // Hot, bring cold drinks
+    strcpy((char*)au8ClimateInfo, "Very hot.");
+    strcpy((char*)au8Recommedation, "Bring some water!");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading > 35) {
     // Stay indoors! Too hot!
+    strcpy((char*)au8ClimateInfo, "Dangerously hot.");
+    strcpy((char*)au8Recommedation, "Stay indoors!");
   }
 
   else {
     // Error
+    strcpy((char*)au8ClimateInfo, "Unknown conditions");
+    strcpy((char*)au8Recommedation, "N/A");
   }
 
   /* Parse each of the bytes sent by SHTC3 so we can display it in ASCII on the LCD */
@@ -274,6 +303,22 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   LcdClearPixels(&G_sLcdClearLine2);
 
   LcdLoadString(au8HumidityReading, LCD_FONT_SMALL, &sReadingLocation);
+
+  sClimateInfoLocation.u16PixelColumnAddress =
+  U16_LCD_CENTER_COLUMN - (strlen((char const*)au8ClimateInfo) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
+
+  sClimateInfoLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE3;
+  LcdClearPixels(&G_sLcdClearLine3);
+
+  LcdLoadString(au8ClimateInfo, LCD_FONT_SMALL, &sClimateInfoLocation);
+
+  sRecommendationLocation.u16PixelColumnAddress =
+  U16_LCD_CENTER_COLUMN - (strlen((char const*)au8Recommedation) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
+
+  sRecommendationLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE4;
+  LcdClearPixels(&G_sLcdClearLine4);
+
+  LcdLoadString(au8Recommedation, LCD_FONT_SMALL, &sRecommendationLocation);
 
   ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
 }
