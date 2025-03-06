@@ -47,7 +47,9 @@ Variable names shall start with "ClimateMonitor_<type>" and be declared as stati
 static fnCode_type ClimateMonitor_pfStateMachine;               /*!< @brief The state machine function pointer */
 static u32 ClimateMonitor_u32Timer;                             /*!< @brief Timer used for wait periods across states */
 static int ClimateMonitor_u32SHTC3TempReading = 20;              /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
+static int ClimateMonitor_u32SHTC3FahrenheitReading = 52;        /*!< @brief Temperature reading in Fahrenheit obtained from SHTC3 */
 static u32 ClimateMonitor_u32SHTC3HumidityReading = 30;          /*!< @brief Humidity reading in RH% obtained from SHTC3 */
+static bool isFahrenheit = FALSE;                                /*!< @brief Flag to display temp in fahrenheit */
 
 
 /**********************************************************************************************************************
@@ -184,6 +186,7 @@ static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
   /* Convert binary measurements to real values */
   // ClimateMonitor_u32SHTC3TempReading = (-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / 65536));
   // ClimateMonitor_u32SHTC3HumidityReading = (100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / 65536));
+  // ClimateMonitor_u32SHTC3FahrenheitReading = ClimateMonitor_u32SHTC3TempReading * 9/5 + 32;
 
   ClimateMonitor_u32Timer = 0;
   ClimateMonitor_pfStateMachine = ClimateMonitorSM_DisplayInfo;
@@ -283,7 +286,12 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   }
 
   /* Parse each of the bytes sent by SHTC3 so we can display it in ASCII on the LCD */
-  sprintf(au8TempReading, "Temperature: %dC", ClimateMonitor_u32SHTC3TempReading);
+  if (isFahrenheit) {
+    sprintf(au8TempReading, "Temperature: %dF", ClimateMonitor_u32SHTC3FahrenheitReading);
+  } else {
+    sprintf(au8TempReading, "Temperature: %dC", ClimateMonitor_u32SHTC3TempReading);
+  }
+
   sprintf(au8HumidityReading, "Humidity: %d%%", ClimateMonitor_u32SHTC3HumidityReading);
 
   /* Print messages to the center of the LCD */
@@ -326,8 +334,20 @@ static void ClimateMonitorSM_DisplayInfo(void) {
 static void ClimateMonitorSM_Idle(void)
 {
   ClimateMonitor_u32Timer++;
+
+  if (WasButtonPressed(BUTTON0)) {
+    ButtonAcknowledge(BUTTON0);
+
+    isFahrenheit = FALSE;
+  }
+
+  if (WasButtonPressed(BUTTON1)) {
+    ButtonAcknowledge(BUTTON1);
+
+    isFahrenheit = TRUE;
+  }
   
-  if (ClimateMonitor_u32Timer == 900000) {
+  if (ClimateMonitor_u32Timer == U32_SHTC3_MEASURE_PERIOD_MS) {
     ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
   }
 
