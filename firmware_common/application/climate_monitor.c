@@ -46,8 +46,8 @@ Variable names shall start with "ClimateMonitor_<type>" and be declared as stati
 ***********************************************************************************************************************/
 static fnCode_type ClimateMonitor_pfStateMachine;               /*!< @brief The state machine function pointer */
 static u32 ClimateMonitor_u32Timer;                             /*!< @brief Timer used for wait periods across states */
-static u8 ClimateMonitor_u8SHTC3TempReading;                      /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
-static u8 ClimateMonitor_u8SHTC3HumidityReading;                  /*!< @brief Humidity reading in RH% obtained from SHTC3 */
+static u32 ClimateMonitor_u32SHTC3TempReading = 0;              /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
+static u32 ClimateMonitor_u32SHTC3HumidityReading = 0;          /*!< @brief Humidity reading in RH% obtained from SHTC3 */
 
 
 /**********************************************************************************************************************
@@ -79,6 +79,8 @@ Promises:
 */
 void ClimateMonitorInitialize(void) {
     ErrorStatusType eErrorStatus = SUCCESS;
+
+    LcdClearScreen();
 
     /* Initialize I2C pins */
     eErrorStatus += BladeRequestPin(BLADE_PIN8, PERIPHERAL);
@@ -161,7 +163,7 @@ static void ClimateMonitorSM_VerifySHTC3(void) {
       DebugLineFeed();
     }
 
-    ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
 }
 
 static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
@@ -180,16 +182,100 @@ static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
   }
 
   /* Convert binary measurements to real values */
-  ClimateMonitor_u8SHTC3TempReading = (u8)(-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / (u8)(2^16)));
-  ClimateMonitor_u8SHTC3HumidityReading = (u8)(100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / (u8)(2^16)));
+  ClimateMonitor_u32SHTC3TempReading = (-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / 65536));
+  ClimateMonitor_u32SHTC3HumidityReading = (100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / 65536));
 
   ClimateMonitor_u32Timer = 0;
-  ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
+  ClimateMonitor_pfStateMachine = ClimateMonitorSM_DisplayInfo;
 
 }
 
 static void ClimateMonitorSM_DisplayInfo(void) {
-  
+  static PixelAddressType sReadingLocation;
+  static PixelAddressType sClimateInfoLocation;
+  static PixelAddressType sRecommendationLocation;
+  extern PixelBlockType G_sLcdClearLine1;
+  extern PixelBlockType G_sLcdClearLine2;
+  extern PixelBlockType G_sLcdClearLine3;
+  extern PixelBlockType G_sLcdClearLine4;
+  u8 au8TempReading[20];
+  u8 au8HumidityReading[20];
+
+  /* Select output climate info message based on data */
+  if (ClimateMonitor_u32SHTC3TempReading <= (u32)-20) {
+    // Frigid!
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)0 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+    // Cold and chilly!
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)0) {
+    // Cool, crisp fresh air
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)10 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+    // Mild, but very humid.
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)10) {
+    // Mild, wear a light jacket
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)15 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+    // Warm but very humid! Breathable clothing.
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)15) {
+    // Warm, enjoy the weather, wear a sweater!
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)25 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+    // Almost perfect, but too humid. Breathable clothing.
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)25) {
+    // Perfect temperature! Go outside!
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)35 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)65) {
+    // Hot and humid! Stay in A/C room.
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)35) {
+    // Hot, bring cold drinks
+  }
+
+  else if (ClimateMonitor_u32SHTC3TempReading > 35) {
+    // Stay indoors! Too hot!
+  }
+
+  else {
+    // Error
+  }
+
+  /* Parse each of the bytes sent by SHTC3 so we can display it in ASCII on the LCD */
+  sprintf(au8TempReading, "Temperature: %dC", ClimateMonitor_u32SHTC3TempReading);
+  sprintf(au8HumidityReading, "Humidity: %d%%", ClimateMonitor_u32SHTC3HumidityReading);
+
+  /* Print messages to the center of the LCD */
+  sReadingLocation.u16PixelColumnAddress =
+  U16_LCD_CENTER_COLUMN - (strlen((char const*)au8TempReading) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
+
+  sReadingLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE1;
+  LcdClearPixels(&G_sLcdClearLine1);
+
+  LcdLoadString(au8TempReading, LCD_FONT_SMALL, &sReadingLocation);
+
+  sReadingLocation.u16PixelColumnAddress =
+  U16_LCD_CENTER_COLUMN - (strlen((char const*)au8HumidityReading) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
+
+  sReadingLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE2;
+  LcdClearPixels(&G_sLcdClearLine2);
+
+  LcdLoadString(au8HumidityReading, LCD_FONT_SMALL, &sReadingLocation);
+
+  ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
 }
 
 /* What does this state do? */
