@@ -196,8 +196,8 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   static PixelAddressType sRecommendationLocation;
   extern PixelBlockType G_sLcdClearLine1;
   extern PixelBlockType G_sLcdClearLine2;
-  extern PixelBlockType G_sLcdClearLine3;
   extern PixelBlockType G_sLcdClearLine4;
+  extern PixelBlockType G_sLcdClearLine5;
   u8 au8TempReading[20];
   u8 au8HumidityReading[20];
   u8 au8ClimateInfo[20];
@@ -307,16 +307,16 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   sClimateInfoLocation.u16PixelColumnAddress =
   U16_LCD_CENTER_COLUMN - (strlen((char const*)au8ClimateInfo) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
 
-  sClimateInfoLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE3;
-  LcdClearPixels(&G_sLcdClearLine3);
+  sClimateInfoLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE4;
+  LcdClearPixels(&G_sLcdClearLine4);
 
   LcdLoadString(au8ClimateInfo, LCD_FONT_SMALL, &sClimateInfoLocation);
 
   sRecommendationLocation.u16PixelColumnAddress =
   U16_LCD_CENTER_COLUMN - (strlen((char const*)au8Recommedation) * (U8_LCD_SMALL_FONT_COLUMNS + U8_LCD_SMALL_FONT_SPACE) / 2); 
 
-  sRecommendationLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE4;
-  LcdClearPixels(&G_sLcdClearLine4);
+  sRecommendationLocation.u16PixelRowAddress = U8_LCD_SMALL_FONT_LINE5;
+  LcdClearPixels(&G_sLcdClearLine5);
 
   LcdLoadString(au8Recommedation, LCD_FONT_SMALL, &sRecommendationLocation);
 
