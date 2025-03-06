@@ -292,7 +292,7 @@ static void ClimateMonitorSM_DisplayInfo(void) {
     sprintf(au8TempReading, "Temperature: %dC", ClimateMonitor_u32SHTC3TempReading);
   }
 
-  sprintf(au8HumidityReading, "Humidity: %d%%", ClimateMonitor_u32SHTC3HumidityReading);
+  sprintf(au8HumidityReading, "Humidity: %ld%%", ClimateMonitor_u32SHTC3HumidityReading);
 
   /* Print messages to the center of the LCD */
   sReadingLocation.u16PixelColumnAddress =
@@ -339,15 +339,17 @@ static void ClimateMonitorSM_Idle(void)
     ButtonAcknowledge(BUTTON0);
 
     isFahrenheit = FALSE;
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
   }
 
-  if (WasButtonPressed(BUTTON1)) {
+  else if (WasButtonPressed(BUTTON1)) {
     ButtonAcknowledge(BUTTON1);
 
     isFahrenheit = TRUE;
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
   }
   
-  if (ClimateMonitor_u32Timer == U32_SHTC3_MEASURE_PERIOD_MS) {
+  else if (ClimateMonitor_u32Timer == U32_SHTC3_MEASURE_PERIOD_MS) {
     ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
   }
 
