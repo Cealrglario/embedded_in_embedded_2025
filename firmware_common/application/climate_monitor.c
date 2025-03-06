@@ -46,8 +46,8 @@ Variable names shall start with "ClimateMonitor_<type>" and be declared as stati
 ***********************************************************************************************************************/
 static fnCode_type ClimateMonitor_pfStateMachine;               /*!< @brief The state machine function pointer */
 static u32 ClimateMonitor_u32Timer;                             /*!< @brief Timer used for wait periods across states */
-static u32 ClimateMonitor_u32SHTC3TempReading = 0;              /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
-static u32 ClimateMonitor_u32SHTC3HumidityReading = 0;          /*!< @brief Humidity reading in RH% obtained from SHTC3 */
+static int ClimateMonitor_u32SHTC3TempReading = 20;              /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
+static u32 ClimateMonitor_u32SHTC3HumidityReading = 30;          /*!< @brief Humidity reading in RH% obtained from SHTC3 */
 
 
 /**********************************************************************************************************************
@@ -182,8 +182,8 @@ static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
   }
 
   /* Convert binary measurements to real values */
-  ClimateMonitor_u32SHTC3TempReading = (-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / 65536));
-  ClimateMonitor_u32SHTC3HumidityReading = (100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / 65536));
+  // ClimateMonitor_u32SHTC3TempReading = (-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / 65536));
+  // ClimateMonitor_u32SHTC3HumidityReading = (100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / 65536));
 
   ClimateMonitor_u32Timer = 0;
   ClimateMonitor_pfStateMachine = ClimateMonitorSM_DisplayInfo;
@@ -204,68 +204,67 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   u8 au8Recommedation[20];
 
   /* Select output climate info message based on data */
-  if (ClimateMonitor_u32SHTC3TempReading <= (u32)-20) {
+  if (ClimateMonitor_u32SHTC3TempReading <= -20) {
     // Frigid!
     strcpy((char*)au8ClimateInfo, "Extremely cold.");
     strcpy((char*)au8Recommedation, "Wear a heavy coat!");
 }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)0 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 0 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Cold and chilly!
-    strcpy((char*)au8ClimateInfo, "Cold and very humid.");
+    strcpy((char*)au8ClimateInfo, "Cold and humid.");
     strcpy((char*)au8Recommedation, "Breathable coat!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)0) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 0) {
     // Cool, crisp fresh air
     strcpy((char*)au8ClimateInfo, "Cold and crisp.");
     strcpy((char*)au8Recommedation, "Wear some layers!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)10 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 10 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Mild, but very humid.
-    strcpy((char*)au8ClimateInfo, "Mild but very humid.");
+    strcpy((char*)au8ClimateInfo, "Mild and humid.");
     strcpy((char*)au8Recommedation, "Breathable layers!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)10) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 10) {
     // Mild, wear a light jacket
     strcpy((char*)au8ClimateInfo, "Mild, cool air.");
     strcpy((char*)au8Recommedation, "Wear a light coat!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)15 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 15 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Warm but very humid! Breathable clothing.
     strcpy((char*)au8ClimateInfo, "Warm but humid.");
     strcpy((char*)au8Recommedation, "Breathable clothing!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)15) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 15) {
     // Warm, enjoy the weather, wear a sweater!
     strcpy((char*)au8ClimateInfo, "Warm and crisp.");
     strcpy((char*)au8Recommedation, "Wear a sweater!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)25 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 25 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Almost perfect, but too humid. Breathable clothing.
     strcpy((char*)au8ClimateInfo, "Ideal but humid.");
     strcpy((char*)au8Recommedation, "Airy clothing!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)25) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 25) {
     // Perfect temperature! Go outside!
     strcpy((char*)au8ClimateInfo, "Perfect conditions.");
     strcpy((char*)au8Recommedation, "Go outside!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= 
-    (u32)35 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)65) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 35 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)65) {
     // Hot and humid! Stay in A/C room.
-    strcpy((char*)au8ClimateInfo, "Very hot and humid.");
+    strcpy((char*)au8ClimateInfo, "Hot and humid.");
     strcpy((char*)au8Recommedation, "Stay dry and cool!");
   }
 
-  else if (ClimateMonitor_u32SHTC3TempReading <= (u32)35) {
+  else if (ClimateMonitor_u32SHTC3TempReading <= 35) {
     // Hot, bring cold drinks
     strcpy((char*)au8ClimateInfo, "Very hot.");
     strcpy((char*)au8Recommedation, "Bring some water!");
