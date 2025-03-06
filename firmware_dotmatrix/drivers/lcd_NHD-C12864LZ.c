@@ -97,7 +97,7 @@ All Global variable names shall start with "G_<type>Lcd"
 volatile u8 G_aau8LcdRamImage[U16_LCD_IMAGE_ROWS][U16_LCD_IMAGE_COLUMNS];    /*!< @brief A complete copy of the LCD image in RAM */
 
 /* The following are used commonly when working with text on the screen, so are defined */
-PixelBlockType G_sLcdClearWholeScreen = 
+extern PixelBlockType G_sLcdClearWholeScreen = 
 {
   .u16RowStart = 0,
   .u16ColumnStart = 0,
@@ -113,7 +113,7 @@ PixelBlockType G_sLcdClearLine0 =
   .u16ColumnSize = U16_LCD_COLUMNS
 };
 
-PixelBlockType G_sLcdClearLine1 = 
+extern PixelBlockType G_sLcdClearLine1 = 
 {
   .u16RowStart = U8_LCD_SMALL_FONT_LINE1,
   .u16ColumnStart = 0,
@@ -121,7 +121,7 @@ PixelBlockType G_sLcdClearLine1 =
   .u16ColumnSize = U16_LCD_COLUMNS
 };
 
-PixelBlockType G_sLcdClearLine2 = 
+extern PixelBlockType G_sLcdClearLine2 = 
 {
   .u16RowStart = U8_LCD_SMALL_FONT_LINE2,
   .u16ColumnStart = 0,
@@ -129,7 +129,7 @@ PixelBlockType G_sLcdClearLine2 =
   .u16ColumnSize = U16_LCD_COLUMNS
 };
 
-PixelBlockType G_sLcdClearLine3 = 
+extern PixelBlockType G_sLcdClearLine3 = 
 {
   .u16RowStart = U8_LCD_SMALL_FONT_LINE3,
   .u16ColumnStart = 0,
@@ -137,7 +137,7 @@ PixelBlockType G_sLcdClearLine3 =
   .u16ColumnSize = U16_LCD_COLUMNS
 };
 
-PixelBlockType G_sLcdClearLine4 = 
+extern PixelBlockType G_sLcdClearLine4 = 
 {
   .u16RowStart = U8_LCD_SMALL_FONT_LINE4,
   .u16ColumnStart = 0,
