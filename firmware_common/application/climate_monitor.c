@@ -45,7 +45,9 @@ Global variable definitions with scope limited to this local application.
 Variable names shall start with "ClimateMonitor_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type ClimateMonitor_pfStateMachine;               /*!< @brief The state machine function pointer */
-//static u32 ClimateMonitor_u32Timeout;                           /*!< @brief Timeout counter used across states */
+static u32 ClimateMonitor_u32Timer;                             /*!< @brief Timer used for wait periods across states */
+static u8 ClimateMonitor_u8SHTC3TempReading;                      /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
+static u8 ClimateMonitor_u8SHTC3HumidityReading;                  /*!< @brief Humidity reading in RH% obtained from SHTC3 */
 
 
 /**********************************************************************************************************************
@@ -129,7 +131,7 @@ State Machine Function Definitions
 /*-------------------------------------------------------------------------------------------------------------------*/
 
 static void ClimateMonitorSM_SleepSHTC3(void) {
-    u8 au8SHTC3_Sleep[] = {U8_SHTC3_SLEEP_MSB, U8_SHTC3_SLEEP_LSB};
+    static u8 au8SHTC3_Sleep[] = {U8_SHTC3_SLEEP_MSB, U8_SHTC3_SLEEP_LSB};
 
     TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8SHTC3_Sleep, TWI_STOP);
 
@@ -137,7 +139,7 @@ static void ClimateMonitorSM_SleepSHTC3(void) {
 }
 
 static void ClimateMonitorSM_WakeSHTC3(void) {
-    u8 au8SHTC3_Wake[] = {U8_SHTC3_WAKEUP_MSB, U8_SHTC3_WAKEUP_LSB};
+    static u8 au8SHTC3_Wake[] = {U8_SHTC3_WAKEUP_MSB, U8_SHTC3_WAKEUP_LSB};
 
     TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8SHTC3_Wake, TWI_STOP);
 
@@ -145,8 +147,8 @@ static void ClimateMonitorSM_WakeSHTC3(void) {
 }
 
 static void ClimateMonitorSM_VerifySHTC3(void) {
-    u8 au8VerifySHTC3[] = {U8_SHTC3_READ_ID_MSB, U8_SHTC3_READ_ID_LSB};
-    u8 au8SHTC3_Response[3] = {0, 0, 0};
+    static u8 au8VerifySHTC3[] = {U8_SHTC3_READ_ID_MSB, U8_SHTC3_READ_ID_LSB};
+    static u8 au8SHTC3_Response[3] = {0, 0, 0};
 
     TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8VerifySHTC3, TWI_NO_STOP);
     TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3_Response, 3);
@@ -163,8 +165,8 @@ static void ClimateMonitorSM_VerifySHTC3(void) {
 }
 
 static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
-  u8 au8TakeMeasurementSHTC3[] = {U8_SHTC3_MEASURE_MSB, U8_SHTC3_MEASURE_LSB};
-  u8 au8SHTC3Measurement[6] = {0, 0, 0, 0, 0, 0};
+  static u8 au8TakeMeasurementSHTC3[] = {U8_SHTC3_MEASURE_MSB, U8_SHTC3_MEASURE_LSB};
+  static u8 au8SHTC3Measurement[6] = {0, 0, 0, 0, 0, 0};
 
   TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8TakeMeasurementSHTC3, TWI_NO_STOP);
   TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3Measurement, 6);
@@ -177,14 +179,28 @@ static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
     DebugLineFeed();
   }
 
+  /* Convert binary measurements to real values */
+  ClimateMonitor_u8SHTC3TempReading = (u8)(-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / (u8)(2^16)));
+  ClimateMonitor_u8SHTC3HumidityReading = (u8)(100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / (u8)(2^16)));
+
+  ClimateMonitor_u32Timer = 0;
   ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
 
+}
+
+static void ClimateMonitorSM_DisplayInfo(void) {
+  
 }
 
 /* What does this state do? */
 static void ClimateMonitorSM_Idle(void)
 {
-     
+  ClimateMonitor_u32Timer++;
+  
+  if (ClimateMonitor_u32Timer == 900000) {
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
+  }
+
 } /* end ClimateMonitorSM_Idle() */
      
 
