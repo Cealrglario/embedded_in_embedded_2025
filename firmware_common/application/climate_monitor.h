@@ -37,10 +37,15 @@ void ClimateMonitorRunActiveState(void);
 State Machine Declarations
 ***********************************************************************************************************************/
 static void ClimateMonitorSM_Idle(void);    
+static void ClimateMonitorSM_Wait(void);
 static void ClimateMonitorSM_SleepSHTC3(void);
 static void ClimateMonitorSM_WakeSHTC3(void);
 static void ClimateMonitorSM_VerifySHTC3(void);
+static void ClimateMonitorSM_WaitVerifySHTC3(void);
+static void ClimateMonitorSM_PrintVerifySHTC3(void);
 static void ClimateMonitorSM_TakeMeasurementSHTC3(void);
+static void ClimateMonitorSM_WaitMeasurementSHTC3(void);
+static void ClimateMonitorSM_PrintMeasurementSHTC3(void);
 static void ClimateMonitorSM_DisplayInfo(void);
 static void ClimateMonitorSM_Error(void);         
 
@@ -63,9 +68,10 @@ Constants / Definitions
 
 /* SHTC3-relevant Constants */
 #define U8_SHTC3_I2C_ADDRESS            (u8)0x70    /* I2C address of the SHTC3 sensor */
-#define U32_SHTC3_MEASURE_PERIOD_MS     (u32)900000 /* How often the SHTC3 sensor takes a measurement, in ms*/
+#define U32_SHTC3_MEASURE_PERIOD_MS     (u32)3000 /* How often the SHTC3 sensor takes a measurement, in ms */
 #define U8_SHTC3_TEMP_BYTE_INDEX        (u8)0       /* Index where the temperature reading byte is stored after reading measurement */
 #define U8_SHTC3_HUMIDITY_BYTE_INDEX    (u8)3       /* Index where the humidity reading byte is stored after reading measurement */
+#define U32_SHTC3_TX_WAIT_MS            (u32)500    /* Wait period in ms to print out the data received from the SHTC3 sensor */
 
 
 #endif /* __CLIMATE_MONITOR_H */

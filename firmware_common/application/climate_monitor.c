@@ -46,10 +46,12 @@ Variable names shall start with "ClimateMonitor_<type>" and be declared as stati
 ***********************************************************************************************************************/
 static fnCode_type ClimateMonitor_pfStateMachine;               /*!< @brief The state machine function pointer */
 static u32 ClimateMonitor_u32Timer;                             /*!< @brief Timer used for wait periods across states */
-static int ClimateMonitor_u32SHTC3TempReading = 20;              /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
-static int ClimateMonitor_u32SHTC3FahrenheitReading = 52;        /*!< @brief Temperature reading in Fahrenheit obtained from SHTC3 */
-static u32 ClimateMonitor_u32SHTC3HumidityReading = 30;          /*!< @brief Humidity reading in RH% obtained from SHTC3 */
-static bool isFahrenheit = FALSE;                                /*!< @brief Flag to display temp in fahrenheit */
+static int ClimateMonitor_u32SHTC3TempReading;                  /*!< @brief Temperature reading in Celsius obtained from SHTC3 */
+static int ClimateMonitor_u32SHTC3FahrenheitReading;            /*!< @brief Temperature reading in Fahrenheit obtained from SHTC3 */
+static u32 ClimateMonitor_u32SHTC3HumidityReading;              /*!< @brief Humidity reading in RH% obtained from SHTC3 */
+static bool isFahrenheit = FALSE;                               /*!< @brief Flag to display temp in fahrenheit */
+static u8 au8SHTC3VerifyResponse[3];                            /*!< @brief Response from SHTC3 ID Register */
+static u8 au8SHTC3Measurement[6];                               /*!< @brief Response from SHTC3 Measurements */
 
 
 /**********************************************************************************************************************
@@ -152,16 +154,29 @@ static void ClimateMonitorSM_WakeSHTC3(void) {
 
 static void ClimateMonitorSM_VerifySHTC3(void) {
     static u8 au8VerifySHTC3[] = {U8_SHTC3_READ_ID_MSB, U8_SHTC3_READ_ID_LSB};
-    static u8 au8SHTC3_Response[3] = {0, 0, 0};
 
-    TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8VerifySHTC3, TWI_NO_STOP);
-    TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3_Response, 3);
+    TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8VerifySHTC3, TWI_STOP);
+    TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3VerifyResponse, 3);
 
-    DebugPrintf("Response (each line is one byte): ");
+    ClimateMonitor_u32Timer = 0;
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_WaitVerifySHTC3;
+}
+
+static void ClimateMonitorSM_WaitVerifySHTC3(void) {
+    ClimateMonitor_u32Timer++;
+
+    if (ClimateMonitor_u32Timer == U32_SHTC3_TX_WAIT_MS) {
+      ClimateMonitor_pfStateMachine = ClimateMonitorSM_PrintVerifySHTC3;
+    }
+}
+
+static void ClimateMonitorSM_PrintVerifySHTC3(void) {
+    DebugLineFeed();
+    DebugPrintf("Verification ID (one byte per line): ");
     DebugLineFeed();
 
-    for (int i = 0; i < (sizeof(au8SHTC3_Response) / sizeof(u8)); i++) {
-      DebugPrintNumber(au8SHTC3_Response[i]);
+    for (u8 i = 0; i < (sizeof(au8SHTC3VerifyResponse) / sizeof(u8)); i++) {
+      DebugPrintNumber(au8SHTC3VerifyResponse[i]);
       DebugLineFeed();
     }
 
@@ -170,12 +185,28 @@ static void ClimateMonitorSM_VerifySHTC3(void) {
 
 static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
   static u8 au8TakeMeasurementSHTC3[] = {U8_SHTC3_MEASURE_MSB, U8_SHTC3_MEASURE_LSB};
-  static u8 au8SHTC3Measurement[6] = {0, 0, 0, 0, 0, 0};
 
-  TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8TakeMeasurementSHTC3, TWI_NO_STOP);
+  TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8TakeMeasurementSHTC3, TWI_STOP);
   TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3Measurement, 6);
 
-  DebugPrintf("Measurement (each line is one byte): ");
+  ClimateMonitor_u32Timer = 0;
+  ClimateMonitor_pfStateMachine = ClimateMonitorSM_WaitMeasurementSHTC3;
+}
+
+static void ClimateMonitorSM_WaitMeasurementSHTC3(void) {
+  ClimateMonitor_u32Timer++;
+
+  if (ClimateMonitor_u32Timer == U32_SHTC3_TX_WAIT_MS) {
+    ClimateMonitor_pfStateMachine = ClimateMonitorSM_PrintMeasurementSHTC3;
+  }
+}
+
+static void ClimateMonitorSM_PrintMeasurementSHTC3(void) {
+  u16 u16SHTC3BinaryTemp = 0000;
+  u16 u16SHTC3BinaryHumidity = 0000;
+
+  DebugLineFeed();
+  DebugPrintf("Measurement (one byte per line): ");
   DebugLineFeed();
 
   for (int i = 0; i < (sizeof(au8SHTC3Measurement) / sizeof(u8)); i++) {
@@ -183,14 +214,17 @@ static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
     DebugLineFeed();
   }
 
+  /* Store the MSB and LSB of the measurements in order */
+  u16SHTC3BinaryTemp = ((u16)au8SHTC3Measurement[0] << 8) | (u16)au8SHTC3Measurement[1];
+  u16SHTC3BinaryHumidity = ((u16)au8SHTC3Measurement[3] << 8) | (u16)au8SHTC3Measurement[4];
+
   /* Convert binary measurements to real values */
-  // ClimateMonitor_u32SHTC3TempReading = (-45 + 175 * (au8SHTC3Measurement[U8_SHTC3_TEMP_BYTE_INDEX] / 65536));
-  // ClimateMonitor_u32SHTC3HumidityReading = (100 * (au8SHTC3Measurement[U8_SHTC3_HUMIDITY_BYTE_INDEX] / 65536));
-  // ClimateMonitor_u32SHTC3FahrenheitReading = ClimateMonitor_u32SHTC3TempReading * 9/5 + 32;
+  ClimateMonitor_u32SHTC3TempReading = (int)(-45 + 175 * ((float)u16SHTC3BinaryTemp / 65536));
+  ClimateMonitor_u32SHTC3HumidityReading = (int)(100 * ((float)u16SHTC3BinaryHumidity / 65536));
+  ClimateMonitor_u32SHTC3FahrenheitReading = ClimateMonitor_u32SHTC3TempReading * 9/5 + 32;
 
   ClimateMonitor_u32Timer = 0;
   ClimateMonitor_pfStateMachine = ClimateMonitorSM_DisplayInfo;
-
 }
 
 static void ClimateMonitorSM_DisplayInfo(void) {
