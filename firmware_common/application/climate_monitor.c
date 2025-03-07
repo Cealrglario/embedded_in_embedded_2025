@@ -136,6 +136,8 @@ State Machine Function Definitions
 **********************************************************************************************************************/
 /*-------------------------------------------------------------------------------------------------------------------*/
 
+/* The following sleep and wake states are just to put the sensor into a predictable state before measurement looping begins */
+
 static void ClimateMonitorSM_SleepSHTC3(void) {
     static u8 au8SHTC3_Sleep[] = {U8_SHTC3_SLEEP_MSB, U8_SHTC3_SLEEP_LSB};
 
