@@ -280,7 +280,7 @@ static void ClimateMonitorSM_DisplayInfo(void) {
   else if (ClimateMonitor_u32SHTC3TempReading <= 15 && ClimateMonitor_u32SHTC3HumidityReading >= (u32)60) {
     // Warm but very humid! Breathable clothing.
     strcpy((char*)au8ClimateInfo, "Warm but humid.");
-    strcpy((char*)au8Recommedation, "Breathable clothing!");
+    strcpy((char*)au8Recommedation, "Breathable clothing");
   }
 
   else if (ClimateMonitor_u32SHTC3TempReading <= 15) {
