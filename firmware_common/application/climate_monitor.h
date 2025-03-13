@@ -47,6 +47,7 @@ static void ClimateMonitorSM_TakeMeasurementSHTC3(void);
 static void ClimateMonitorSM_WaitMeasurementSHTC3(void);
 static void ClimateMonitorSM_PrintMeasurementSHTC3(void);
 static void ClimateMonitorSM_DisplayInfo(void);
+static void ClimateMonitorSM_SelectLED(void);
 static void ClimateMonitorSM_Error(void);         
 
 

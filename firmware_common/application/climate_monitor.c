@@ -367,7 +367,53 @@ static void ClimateMonitorSM_DisplayInfo(void) {
 
   LcdLoadString(au8Recommedation, LCD_FONT_SMALL, &sRecommendationLocation);
 
+  ClimateMonitor_pfStateMachine = ClimateMonitorSM_SelectLED;
+}
+
+static void ClimateMonitorSM_SelectLED(void) {
+  /* Turn off all LEDs except the LCD backlight */
+  for (int i = 0;  i < U8_TOTAL_LEDS - 1; i++) {
+    LedOff((LedNameType)i);
+  }
+
+  if (ClimateMonitor_u32SHTC3TempReading <= -20) {
+    /* Super cold, purple LED*/
+    LedOn(BLUE0);
+    LedPWM(RED0, LED_PWM_50);
+  } else if (ClimateMonitor_u32SHTC3TempReading <= 0) {
+    /* Cold, cyan LED */
+    LedOn(BLUE0);
+    LedOn(GREEN0);
+  } else if (ClimateMonitor_u32SHTC3TempReading <= 10) {
+    /* Mild, light green/cyan LED*/
+    LedOn(GREEN1);
+    LedPWM(RED1, LED_PWM_25);
+    LedPWM(BLUE1, LED_PWM_10);
+  } else if (ClimateMonitor_u32SHTC3TempReading <= 15) {
+    /* Warmer, yellow LED*/
+    LedOn(GREEN1);
+    LedOn(RED1);
+  } else if (ClimateMonitor_u32SHTC3TempReading <= 25) {
+    /* Perfect, golden LED*/
+    LedOn(RED2);
+    LedPWM(GREEN2, LED_PWM_35);
+  } else if (ClimateMonitor_u32SHTC3TempReading <= 35) {
+    /* Hot, orange LED*/
+    LedOn(RED3);
+    LedPWM(GREEN3, LED_PWM_10);
+  } else if (ClimateMonitor_u32SHTC3TempReading > 35) {
+    /* Too hot, red LED*/
+    LedOn(RED3);
+  } else { 
+    /* Error blinking */
+    LedBlink(RED0, LED_1HZ);
+    LedBlink(RED1, LED_1HZ);
+    LedBlink(RED2, LED_1HZ);
+    LedBlink(RED3, LED_1HZ);
+  }
+
   ClimateMonitor_pfStateMachine = ClimateMonitorSM_Idle;
+
 }
 
 /* What does this state do? */
