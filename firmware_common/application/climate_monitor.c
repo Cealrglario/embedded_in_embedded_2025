@@ -50,7 +50,7 @@ static int ClimateMonitor_u32SHTC3TempReading;                  /*!< @brief Temp
 static int ClimateMonitor_u32SHTC3FahrenheitReading;            /*!< @brief Temperature reading in Fahrenheit obtained from SHTC3 */
 static u32 ClimateMonitor_u32SHTC3HumidityReading;              /*!< @brief Humidity reading in RH% obtained from SHTC3 */
 static bool isFahrenheit = FALSE;                               /*!< @brief Flag to display temp in fahrenheit */
-static u8 au8SHTC3VerifyResponse[3];                            /*!< @brief Response from SHTC3 ID Register */
+static u8 au8SHTC3VerifyResponse[2];                            /*!< @brief Response from SHTC3 ID Register */
 static u8 au8SHTC3Measurement[6];                               /*!< @brief Response from SHTC3 Measurements */
 
 
@@ -158,7 +158,7 @@ static void ClimateMonitorSM_VerifySHTC3(void) {
     static u8 au8VerifySHTC3[] = {U8_SHTC3_READ_ID_MSB, U8_SHTC3_READ_ID_LSB};
 
     TwiWriteData(U8_SHTC3_I2C_ADDRESS, 2, au8VerifySHTC3, TWI_STOP);
-    TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3VerifyResponse, 3);
+    TwiReadData(U8_SHTC3_I2C_ADDRESS, au8SHTC3VerifyResponse, 2);
 
     ClimateMonitor_u32Timer = 0;
     ClimateMonitor_pfStateMachine = ClimateMonitorSM_WaitVerifySHTC3;
@@ -174,7 +174,7 @@ static void ClimateMonitorSM_WaitVerifySHTC3(void) {
 
 static void ClimateMonitorSM_PrintVerifySHTC3(void) {
     DebugLineFeed();
-    DebugPrintf("Verification ID (one byte per line): ");
+    DebugPrintf("Verification ID (one byte per line, values in decimal): ");
     DebugLineFeed();
 
     for (u8 i = 0; i < (sizeof(au8SHTC3VerifyResponse) / sizeof(u8)); i++) {
@@ -208,7 +208,7 @@ static void ClimateMonitorSM_PrintMeasurementSHTC3(void) {
   u16 u16SHTC3BinaryHumidity = 0000;
 
   DebugLineFeed();
-  DebugPrintf("Measurement (one byte per line): ");
+  DebugPrintf("Measurement (one byte per line, values in decimal): ");
   DebugLineFeed();
 
   for (int i = 0; i < (sizeof(au8SHTC3Measurement) / sizeof(u8)); i++) {
