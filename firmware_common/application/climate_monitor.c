@@ -182,7 +182,11 @@ static void ClimateMonitorSM_PrintVerifySHTC3(void) {
       DebugLineFeed();
     }
 
-    ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
+    if (au8SHTC3VerifyResponse[0] == 0x08 && au8SHTC3VerifyResponse[1] == 0x87) {
+      ClimateMonitor_pfStateMachine = ClimateMonitorSM_TakeMeasurementSHTC3;
+    } else {
+      ClimateMonitor_pfStateMachine = ClimateMonitorSM_Error;
+    }
 }
 
 static void ClimateMonitorSM_TakeMeasurementSHTC3(void) {
