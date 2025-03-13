@@ -69,9 +69,17 @@ Constants / Definitions
 /* SHTC3-relevant Constants */
 #define U8_SHTC3_I2C_ADDRESS            (u8)0x70    /* I2C address of the SHTC3 sensor */
 #define U32_SHTC3_MEASURE_PERIOD_MS     (u32)3000   /* How often the SHTC3 sensor takes a measurement, in ms */
-#define U8_SHTC3_TEMP_BYTE_INDEX        (u8)0       /* Index where the temperature reading byte is stored after reading measurement */
-#define U8_SHTC3_HUMIDITY_BYTE_INDEX    (u8)3       /* Index where the humidity reading byte is stored after reading measurement */
+#define U8_SHTC3_VERIFY_ID_MSB          (u8)0x08    /* MSB of the expected ID when checking verification of the SHTC3 sensor */
+#define U8_SHTC3_VERIFY_ID_LSB          (u8)0x87    /* LSB of the expected ID when checking verification of the SHTC3 sensor */
+#define U8_SHTC3_TEMP_MSB_INDEX         (u8)0       /* Index where the temperature reading byte MSB is stored after reading measurement */
+#define U8_SHTC3_TEMP_LSB_INDEX         (u8)1       /* Index where the temperature reading byte LSB is stored after reading measurement */
+#define U8_SHTC3_HUMIDITY_MSB_INDEX     (u8)3       /* Index where the humidity reading byte MSB is stored after reading measurement */
+#define U8_SHTC3_HUMIDITY_LSB_INDEX     (u8)4       /* Index where the humidity reading byte LSB is stored after reading measurement */
 #define U32_SHTC3_TX_WAIT_MS            (u32)500    /* Wait period in ms to print out the data received from the SHTC3 sensor */
+#define U8_SMALL_FONT_STRING_MAX_LEN    (u8)20      /* Max string length that can be reasonably displayed onto LCD */
+#define U8_SHTC3_COMMAND_LENGTH         (u8)2       /* How many bytes to send for each command write to the SHTC3 sensor */
+#define U8_SHTC3_MEASURE_BYTES          (u8)6       /* How many bytes to read from SHTC3 after taking a measurement */
+#define U8_SHTC3_VERIFY_BYTES           (u8)2       /* How many bytes to read from SHTC3 after reading ID register */
 
 
 #endif /* __CLIMATE_MONITOR_H */
