@@ -1,6 +1,5 @@
-# Embedded in Embedded Development
-
-[TOC]
+# Debugger Testing
+This branch is for learning the use of the on-board debugger of the EiE development board, and learning to use debugging features and functionality via Vscode.
 
 ## Setup
 
