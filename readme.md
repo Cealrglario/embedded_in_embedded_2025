@@ -1,6 +1,5 @@
-# Embedded in Embedded Development
-
-[TOC]
+## Buttons - Learning and Testing
+This branch is for learning the use of buttons on the EiE development board and how to implement practical uses of these buttons. 
 
 ## Setup
 
