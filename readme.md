@@ -1,6 +1,5 @@
-# Embedded in Embedded Development
-
-[TOC]
+# Ant Module Slave Demoing
+This branch is for the testing and learning of the ANT capabilities of the EiE development board. In this case, the EiE development board acts as the Slave, and the connected laptop/computer acts as the Master sending ANT messages to the development board which are then displayed on the board's LCD.
 
 ## Setup
 
