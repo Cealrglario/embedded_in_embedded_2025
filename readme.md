@@ -1,4 +1,5 @@
-# Embedded in Embedded Development
+# LED Development
+This branch is for learning the use of and control of the on-board LEDs on the EiE development board.
 
 [TOC]
 
