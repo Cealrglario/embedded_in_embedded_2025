@@ -1,6 +1,5 @@
-# Embedded in Embedded Development
-
-[TOC]
+# Buzzers - Learning and Testing
+This branch is for learning how to use the buzzers included in the EiE development board, culminating in a fun "piano" demonstration that sends commands to the MCU via UART to play actual musical notes corresponding to specific keyboard keys, simulating a mini-piano on the development board.
 
 ## Setup
 
