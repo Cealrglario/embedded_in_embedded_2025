@@ -2,6 +2,8 @@
 
 This branch is dedicated to the development of a "Portable Climate Monitor" - a small, bare metal embedded system based on an ARM Cortex SOC that aims to function as "mini weather station" that can display real-time temperature and humidity data as well as small climate-specific messages to provide recommendations on what to wear in such conditions.
 
+Ultimately, this branch demonstrates the culmination of knowledge of my 2025 year of the Embedded in Embedded program, representing the development of my final project for the program.
+
 ## Setup
 
 To install the necessary tools to compile the project see [setup.md](docs/setup.md).
