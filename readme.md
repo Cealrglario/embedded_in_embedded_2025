@@ -1,8 +1,6 @@
 # LED Development
 This branch is for learning the use of and control of the on-board LEDs on the EiE development board.
 
-[TOC]
-
 ## Setup
 
 To install the necessary tools to compile the project see [setup.md](docs/setup.md)
