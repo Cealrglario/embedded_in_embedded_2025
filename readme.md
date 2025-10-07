@@ -1,6 +1,5 @@
-# Embedded in Embedded Development
-
-[TOC]
+# LCD Dot Matrix Development
+This branch is for learning the use of and testing the LCD dot matrix of the EiE development board.
 
 ## Setup
 
